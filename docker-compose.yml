@@ -1,0 +1,51 @@
+version: "3"
+
+services:
+
+  nginx:
+    image: "nginx:latest"
+    restart: "always"
+    volumes:
+      - ./block-chain-frontend/dist:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+
+  block-chain-mariadb:
+    image: mariadb:10.2
+    container_name: block-chain-mariadb
+    volumes:
+      - block-chain-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=BlockChain
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=blockchain
+    ports:
+      - 3306:3306
+  
+  block-chain-db:
+    build: ./block-chain-db
+    container_name: block-chain-db
+    environment:
+      - DB_SERVER=block-chain-mariadb
+      - MYSQL_DATABASE=BlockChain
+      - MYSQL_USE=user
+      - MYSQL_PASSWORD=blockchain
+    restart: "always"
+    ports:
+      - 8000:8000
+    links:
+      - block-chain-mariadb
+
+  block-chain-backend:
+    build: ./block-chain-backend
+    container_name: block-chain-backend
+    restart: "always"
+    ports:
+      - 3000:3000
+    links:
+      - block-chain-db
+
+volumes:
+  block-chain-data:
